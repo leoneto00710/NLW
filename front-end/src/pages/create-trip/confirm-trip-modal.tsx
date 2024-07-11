@@ -1,6 +1,10 @@
 import { Mail, User, X } from "lucide-react"
-import { FormEvent } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import { Button } from "../../components/button"
+import { format } from "date-fns"
+import { useParams } from "react-router-dom"
+import { api } from "../../lib/axios"
+import { ptBR } from "date-fns/locale"
 
 interface ConfirmTripModalProps{
     closeConfirmTripModal: () => void
@@ -9,12 +13,31 @@ interface ConfirmTripModalProps{
     setOwnerEmail:(email: string)=> void
 }
 
+interface Trip{
+  id: string
+  destination: string,
+  starts_at: string,
+  ends_at: string,
+  is_confirmed: boolean,
+}
+
 export function ConfirmTripModal({
     closeConfirmTripModal,
     createTrip,
     setOwnerEmail,
     setOwnerName,
 } : ConfirmTripModalProps){
+
+  const {tripId} = useParams()
+  const [trip, setTrip] = useState<Trip | undefined>()
+
+  useEffect(() => {
+      api.get(`/trips/${tripId}`).then(response => setTrip(response.data.trip))
+  }, [tripId])
+
+  const displayedDate = trip ? format(trip.starts_at, "d' de 'LLL", {locale:ptBR}).concat(" até ").concat(format(trip.ends_at, "d' de ' LLL ", {locale:ptBR}))
+: null
+
     return(
         
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
@@ -27,7 +50,7 @@ export function ConfirmTripModal({
                 <X className="size-5 text-zinc-400"/>
               </button>
             </div>
-            <p className="text-sm text-zinc-400">Para concluir a criação da viagem para <span className="text-zinc-100 font-semibold">Florianópolis, Brasil</span> nas datas de <span className="text-zinc-100 font-semibold">16 a 27 de Agosto de 2024</span> preencha seus dados abaixo:</p>
+            <p className="text-sm text-zinc-400">Para concluir a criação da viagem para <span className="text-zinc-100 font-semibold">{trip?.destination}</span> nas datas de <span className="text-zinc-100 font-semibold">{displayedDate}</span> preencha seus dados abaixo:</p>
           </div>
 
           <form onSubmit={createTrip} className="space-y-3">
